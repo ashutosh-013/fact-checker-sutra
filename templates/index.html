@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fact Checker Detective</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-image: url('https://www.baltana.com/files/wallpapers-1/True-Detective-TV-Series-Wallpaper-00498.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      color: white;
+    }
+
+    header {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      letter-spacing: 1px;
+    }
+
+    header p {
+      margin: 5px 0 0;
+      font-size: 1rem;
+      color: #ccc;
+      font-style: italic;
+    }
+
+    nav {
+      text-align: center;
+      background: rgba(0,0,0,0.5);
+      padding: 10px 0;
+    }
+
+    nav a {
+      color: #fff;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      background-color: rgba(0, 0, 0, 0.65);
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+      display: none;
+    }
+
+    .active-section {
+      display: block !important;
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      padding: 10px;
+      font-size: 16px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      resize: none;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+    }
+
+    footer {
+      background-color: rgba(0, 0, 0, 0.6);
+      text-align: center;
+      padding: 15px;
+      color: #aaa;
+      font-size: 14px;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🕵️‍♂️ MR. SUTRA </h1>
+    <p>-VERIFY BEFORE YOU TRUST-</p>
+  </header>
+
+  <nav>
+    <a onclick="showSection('homeSection')">Home</a>
+    <a onclick="showSection('aboutSection')">About</a>
+    <a onclick="showSection('contactSection')">Contact</a>
+  </nav>
+
+  <!-- Home Section -->
+  <div id="homeSection" class="container active-section">
+    <label for="newsInput" class="label">Enter News to Verify:</label>
+    <textarea id="newsInput" placeholder="Paste your news here..."></textarea>
+    <button onclick="checkNews()">Check Now</button>
+
+    <div id="result" style="display:none;">
+      <p><strong>Status:</strong> <span id="status"></span></p>
+      <p><strong>Corrected News:</strong> <span id="corrected"></span></p>
+      <p><strong>Explanation:</strong> <span id="explanation"></span></p>
+    </div>
+  </div>
+
+  <!-- About Section -->
+  <div id="aboutSection" class="container">
+    <h2>About This Project</h2>
+    <p>Welcome to MR. SUTRA – Fact Checker Detective, your trusted AI-powered companion designed to help you navigate the overwhelming flood of news in today’s world. In an era of misinformation and fake news, this project empowers you to verify the authenticity of news articles instantly and confidently.</p>
+
+<p>Built with cutting-edge AI technology and real-time data sources, MR. SUTRA analyzes news pieces and provides clear, concise verdicts on whether they are Real, Fake, or Unverified—along with detailed explanations and corrections when needed. This tool is created with passion by Ashutosh Tukaram Jaid to promote truth, awareness, and responsible information sharing.</p>
+<p>This project is an AI-powered fact checker built by Ashutosh Tukaram Jaid to detect fake, real, or unverified news and provide corrections using cutting-edge technology.</p>
+
+<p>Whether you're a student, journalist, or simply a curious mind, MR. SUTRA is here to help you VERIFY BEFORE YOU TRUST—because informed minds make better decisions and a better world.</p>
+  </div>
+
+  <!-- Contact Section -->
+  <div id="contactSection" class="container">
+    <h2>Contact</h2>
+    <p>Email: jaidashutosh@gmail.com</p>
+    <p>GitHub: https://github.com/ashutosh-013</p>
+    <p>Instagram: __ashuuu_013_</p>
+    <p>Linkedin: https://www.linkedin.com/in/ashutosh-jaid-9824972a3/</p>
+  </div>
+
+  <footer>
+    &copy; 2025 Fact Checker Detective | Created by ASHUTOSH TUKARAM JAID
+  </footer>
+
+  <script>
+    async function checkNews() {
+      const newsText = document.getElementById("newsInput").value.trim();
+      if (!newsText) {
+        alert("Please enter some news to check.");
+        return;
+      }
+
+      const response = await fetch("/check_news", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ news: newsText })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        alert("Error: " + data.error);
+        return;
+      }
+
+      document.getElementById("status").innerText = data.status;
+      document.getElementById("corrected").innerText = data.corrected_news;
+      document.getElementById("explanation").innerText = data.explanation;
+      document.getElementById("result").style.display = "block";
+    }
+
+    function showSection(sectionId) {
+      const sections = document.querySelectorAll(".container");
+      sections.forEach(sec => sec.classList.remove("active-section"));
+      document.getElementById(sectionId).classList.add("active-section");
+    }
+  </script>
+
+</body>
+</html>
