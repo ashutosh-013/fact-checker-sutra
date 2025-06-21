@@ -3,13 +3,14 @@ import requests
 import json
 import re
 import time
+import os
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from threading import Lock
 
 app = Flask(__name__)
 
-# Your real API keys here
+# Your real API keys here (replace with your actual keys)
 GROQ_API_KEY = "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"
 NEWS_API_KEY = "57b87c337d88476f81145feefceb0634"
 
@@ -62,12 +63,15 @@ def search_newsapi(query):
             return cached['result']
 
     url = f"https://newsapi.org/v2/everything?q={query}&language=en&sortBy=publishedAt&apiKey={NEWS_API_KEY}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        articles = response.json().get("articles", [])
-        found = bool(articles)
-        title = articles[0]["title"] if found else None
-    else:
+    try:
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            articles = response.json().get("articles", [])
+            found = bool(articles)
+            title = articles[0]["title"] if found else None
+        else:
+            found, title = False, None
+    except requests.RequestException:
         found, title = False, None
 
     with cache_lock:
@@ -80,7 +84,7 @@ def home():
     return render_template('index.html')
 
 @app.route('/check_news', methods=['POST'])
-@limiter.limit("5 per minute")  # additional safety on this endpoint
+@limiter.limit("5 per minute")  # additional rate limit on this endpoint
 def check_news():
     ip = get_client_ip()
 
@@ -89,7 +93,7 @@ def check_news():
 
     used = increment_quota(ip)
 
-    data = request.json
+    data = request.json or {}
     news_text = data.get('news', '').strip()
 
     if not news_text:
@@ -132,15 +136,16 @@ Respond only in JSON like this:
                 "model": "llama3-70b-8192",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.3
-            }
+            },
+            timeout=15
         )
 
         if response.status_code != 200:
             return jsonify({"error": "Groq API error", "details": response.text}), 500
 
-        reply = response.json()["choices"][0]["message"]["content"].strip()
+        reply = response.json().get("choices", [{}])[0].get("message", {}).get("content", "").strip()
 
-        # Extract JSON from AI response
+        # Extract JSON from AI response safely
         match = re.search(r"\{.*\}", reply, re.DOTALL)
         if not match:
             return jsonify({"error": "AI response did not contain valid JSON", "raw_response": reply}), 500
@@ -156,8 +161,10 @@ Respond only in JSON like this:
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-import os
+@app.route("/healthz")
+def healthz():
+    return "OK", 200
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Get port from environment or default to 5000
+    port = int(os.environ.get("PORT", 5000))  # Dynamic port for Render
     app.run(host="0.0.0.0", port=port)
